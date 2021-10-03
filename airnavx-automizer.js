@@ -3,7 +3,7 @@
 // @namespace			https://w3.airbus.com
 // @include				https://w3.airbus.com/1T40/search/text*
 // @description   Job Card batch downloader
-// @version				1.6
+// @version				1.7
 // @grant					none
 // ==/UserScript==
 
@@ -72,14 +72,14 @@ let createUserUi = ( `
 
   <div id="automizer">
     <div id="automizer-header">
-      Automizer <span id="scriptversion">v1.6</span>
+      Automizer <span id="scriptversion">v1.7</span>
       <p id="copyright">© Copyright obdegirmenci</p>
     </div>
     <div id="automizer-panel">
       <label>MSN - TN  - FSN - Eng Mod</label>
-      <input id="planenumber" class="automizer-input" type="text" placeholder="00435 TC-LGC - TRENTXWB-84" value="05036">
+      <input id="planenumber" class="automizer-input" type="text" placeholder="00435 TC-LGC - TRENTXWB-84" value="">
       <label>Content</label>
-      <textarea id="searchkeyword" class="automizer-input" type="text" placeholder="FUEL..." rows="20">200435-01</textarea>
+      <textarea id="searchkeyword" class="automizer-input" type="text" placeholder="Reason for the Job Refer to the MPD TASK: 200435-01" rows="20"></textarea>
       <button id="automizersearch" class="resetButtonStyle md-primary md-raised md-button">SEARCH</button> <button id="automizerreset" class="resetButtonStyle md-primary md-raised md-button">RESET</button>
     </div>
   </div>
@@ -95,7 +95,7 @@ function docReady(fn) {
     }
 }
 
-// Zaman ayarı
+// Zaman ayarı (Kullanımı azaltıldı)
 var timestage1 = 2500; // Sayfa yüklendikten sonra başlat
 var timestage2 = 0; // MSN arat
 var timestage3 = 1800; // Uçağı seç
@@ -104,7 +104,7 @@ var timestage5 = 0; // Belge numarasını arat
 var timestage6 = 0; // İş kartı menüsü
 var timestage7 = 0; // Yeni iş kartı
 var timestage8 = 0; // Paket adı
-var timestage9 = 4000; // PDF indir
+var timestage9 = 500; // PDF indir
 
 // Sayfa yüklendikten sonra başlat
 docReady(function() {
@@ -113,6 +113,7 @@ docReady(function() {
   var quaueIndex = 0;
   var userTextArea;
   var userLines;
+  var clickDownload;
   
   const starter = function() {
     filterCheck();
@@ -203,16 +204,18 @@ docReady(function() {
 
   // Paket adı
   function printPdf() {
-    setTimeout(function() {
+      setTimeout(function() {
       var packagename = document.querySelector(".jobCardForm input");
       setKeywordText(userKeyword,packagename); 
       isDialogExist(1); // Kapat
       // PDF indir
-      setTimeout(function() {
-        //eventFire(document.querySelector("md-dialog.jobCard-dialog md-dialog-actions button"), "click");
-        console.log("yazdırdım");
-        // Pencereyi kapat
-        eventFire( document.querySelector("md-dialog.jobCard-dialog button.close-button"), "click");
+      clickDownload = setTimeout(function() {
+        // İndir
+        eventFire(document.querySelector("md-dialog.jobCard-dialog md-dialog-actions button"), "click");
+        console.log("İndirme başlatıldı");
+        clearTimeout(clickDownload);
+        // Pencereyi manuel kapat (Test için. Otomatik İndirmeyi kapat.)
+        //eventFire( document.querySelector("md-dialog.jobCard-dialog button.close-button"), "click");
       }, timestage9);
     }, timestage8);
   }
@@ -245,20 +248,20 @@ docReady(function() {
   };
   
   function isJobCardExist() {
-    var searchcycle = 0;
-    let timeid = setInterval(() => {
-      if(document.querySelector("md-menu.buttonlike-menu")) {
+    var searchCycle = 0;
+    let setTimer = setInterval(() => {
+      if (document.querySelector("md-menu.buttonlike-menu")) {
         console.log("Belge bulundu");
-        clearInterval(timeid);
-        searchcycle = 0;
+        clearInterval(setTimer);
+        searchCycle = 0;
         jobCard();
       } else {
-        if ( searchcycle < 8) {
-          searchcycle = searchcycle + 1;
+        if (searchCycle < 8) {
+          searchCycle = searchCycle + 1;
           console.log("Belge bulunamadı");
         } else {
           console.log("Aramaktan vazgeçildi");
-          clearInterval(timeid);
+          clearInterval(setTimer);
           writeResult(1);
         }
       }
@@ -266,23 +269,37 @@ docReady(function() {
   }
   
   function isDialogExist(final) {
-    let timeid = setInterval(() => {
-      if(!final) {
-        if(document.querySelector("md-dialog.jobCard-dialog")) {
+    var waitCycle = 0;
+    let setTimer = setInterval(() => {
+      if (!final) {
+        if (document.querySelector("md-dialog.jobCard-dialog")) {
           console.log("Diyalog bulundu");
-          clearInterval(timeid);
+          clearInterval(setTimer);
           printPdf();
         } else {
           console.log("Diyalog bulunamadı");
         }
       } else {
-        if(document.querySelector("md-dialog.jobCard-dialog")) {
-          console.log("Diyalog Penceresi Açık");
+        ///// İndirilemediyse iptal et
+        if (waitCycle < 20) {
+          if (document.querySelector("md-dialog.jobCard-dialog")) {
+            waitCycle = waitCycle + 1;
+            console.log("Diyalog penceresi açık");
+          } else {
+            waitCycle = 0;
+            console.log("Diyalog penceresi kapalı");
+            clearInterval(setTimer);
+            writeResult();
+          }
         } else {
-          console.log("Diyalog Penceresi Kapalı");
-          clearInterval(timeid);
-          writeResult();
+          eventFire( document.querySelector("md-dialog.jobCard-dialog button.close-button"), "click");
+          waitCycle = 0;
+          console.log("İndirme başlatılamadı");
+          clearInterval(setTimer);
+          clearTimeout(clickDownload);
+          writeResult(2);
         }
+
       }
     }, 800);
   }
@@ -290,15 +307,25 @@ docReady(function() {
   function writeResult(error) {
     var resultSuccess = " - COMPLETED ";
     var resultEndOfList = "- ALL COMPLETED ";
-    var resultError = " - JOB CARD NOT FOUND ";
+    var resultErrorCard = " - JOB CARD NOT FOUND ";
+    var resultErrorFile = " - DOWNLOAD ERROR ";
+
+    errorType = () => {
+      if (error) {
+        if (error == 1) { return resultErrorCard; } else { return resultErrorFile; }
+      } else {
+        return resultEndOfList;
+      }
+    }
+    
     if (quaueIndex < (userLines.length-1) ) {
-      userLines[quaueIndex] = "[" + (quaueIndex+1) + "]" + (error ? resultError : resultSuccess) + "[" + userLines[quaueIndex] + "]";
+      userLines[quaueIndex] = "[" + (quaueIndex+1) + "]" + (error ? errorType() : resultSuccess) + "[" + userLines[quaueIndex] + "]";
       quaueIndex = quaueIndex + 1 ;
       setQuaue();
       searchDoc();
     }
     else {
-      userLines[quaueIndex] = "[" + (quaueIndex+1) + "]" + (error ? resultError : resultEndOfList) + "[" + userLines[quaueIndex] + "]";
+      userLines[quaueIndex] = "[" + (quaueIndex+1) + "]" + errorType() + "[" + userLines[quaueIndex] + "]";
       setQuaue();
       quaueIndex = 0;
       userKeyword = "";
