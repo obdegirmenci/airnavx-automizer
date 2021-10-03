@@ -3,7 +3,7 @@
 // @namespace			https://w3.airbus.com
 // @include				https://w3.airbus.com/1T40/search/text*
 // @description   Job Card batch downloader
-// @version				1.7
+// @version				1.8
 // @grant					none
 // ==/UserScript==
 
@@ -19,7 +19,7 @@ let createUserUi = ( `
       box-sizing: border-box;
       position: absolute;
       top: 200px;
-      right: 250px;
+      right: 350px;
       z-index: 180;
     }
     #automizer-header {
@@ -68,19 +68,24 @@ let createUserUi = ( `
       resize: none;
       line-height: 18px;
     }
+    #planenumber:disabled, #searchkeyword:disabled {
+      background: #13233c;
+      color: #66cedd;
+      border: 1px solid #666;
+    }
   </style>
 
   <div id="automizer">
     <div id="automizer-header">
-      Automizer <span id="scriptversion">v1.7</span>
+      Automizer <span id="scriptversion">v1.8</span>
       <p id="copyright">© Copyright obdegirmenci</p>
     </div>
     <div id="automizer-panel">
       <label>MSN - TN  - FSN - Eng Mod</label>
-      <input id="planenumber" class="automizer-input" type="text" placeholder="00435 TC-LGC - TRENTXWB-84" value="">
+      <input id="planenumber" class="automizer-input" type="text" placeholder="00435 TC-LGC - TRENTXWB-84" value="05036">
       <label>Content</label>
-      <textarea id="searchkeyword" class="automizer-input" type="text" placeholder="Reason for the Job Refer to the MPD TASK: 200435-01" rows="20"></textarea>
-      <button id="automizersearch" class="resetButtonStyle md-primary md-raised md-button">SEARCH</button> <button id="automizerreset" class="resetButtonStyle md-primary md-raised md-button">RESET</button>
+      <textarea id="searchkeyword" class="automizer-input" type="text" placeholder="Reason for the Job Refer to the MPD TASK: 200435-01" rows="20">200435-01</textarea>
+      <button id="automizersearch" class="resetButtonStyle md-primary md-raised md-button">SEARCH</button> <button id="automizerreset" class="resetButtonStyle md-primary md-raised md-button">RESET</button> <button id="automizerpause" class="resetButtonStyle md-primary md-raised md-button" disabled>PAUSE</button>
     </div>
   </div>
 ` );
@@ -104,7 +109,7 @@ var timestage5 = 0; // Belge numarasını arat
 var timestage6 = 0; // İş kartı menüsü
 var timestage7 = 0; // Yeni iş kartı
 var timestage8 = 0; // Paket adı
-var timestage9 = 500; // PDF indir
+var timestage9 = 1000; // PDF indir
 
 // Sayfa yüklendikten sonra başlat
 docReady(function() {
@@ -114,24 +119,62 @@ docReady(function() {
   var userTextArea;
   var userLines;
   var clickDownload;
+  var currentStage;
+  var isPaused = false;
   
   const starter = function() {
+    document.getElementById("automizersearch").disabled = true;
+    document.getElementById("automizerreset").disabled = true;
+    document.getElementById("automizerpause").disabled = false;
     filterCheck();
     tailNumber = document.getElementById("planenumber").value;
     userTextArea = document.getElementById("searchkeyword");
+
+    document.getElementById("planenumber").disabled = true;
+    userTextArea.disabled = true;
+
     userLines = userTextArea.value.split("\n").filter(item => item);
     userTextArea.scrollTop = 0;
     setQuaue();
     eventFire(document.getElementById("select_24"), "click", changeTail() );
   };
-  const resetFilter = function () {
+  const resetFilter = function() {
+    currentStage = resetFilter.name;
     eventFire( document.querySelector("button.resetButtonStyle"), "click" );
     eventFire( document.querySelector("button.clear-button"), "click" );
+
+    document.getElementById("planenumber").disabled = false;
+    userTextArea.disabled = false;
+
+    document.getElementById("automizersearch").disabled = false;
+    document.getElementById("automizerpause").disabled = true;
+    pauseSearch(true);
+  };
+  const pauseSearch = function(isReset) {
+    console.log('AKTİF AŞAMA: ' + currentStage);
+    
+    if (isPaused !== true) {
+      isPaused = true;
+      document.getElementById("automizerpause").textContent = "PAUSED"
+      document.getElementById("automizerreset").disabled = false;
+      return writeResult(3);
+    } else if (isReset === true) {
+      alert("yep");
+      isPaused = false;
+      document.getElementById("automizerpause").textContent = "PAUSE"
+      document.getElementById("automizerreset").disabled = true;
+    } else {
+      isPaused = false;
+      document.getElementById("automizerpause").textContent = "PAUSE"
+      document.getElementById("automizerreset").disabled = true;
+      return searchDoc();
+    }
   };
   
   document.body.insertAdjacentHTML("beforeend", createUserUi);
   document.getElementById("automizersearch").addEventListener("click", starter);
   document.getElementById("automizerreset").addEventListener("click", resetFilter);
+  document.getElementById("automizerpause").addEventListener("click", pauseSearch);
   dragElement(document.getElementById("automizer"));
 
   // CLICK EVENT
@@ -211,11 +254,11 @@ docReady(function() {
       // PDF indir
       clickDownload = setTimeout(function() {
         // İndir
-        eventFire(document.querySelector("md-dialog.jobCard-dialog md-dialog-actions button"), "click");
+        //eventFire(document.querySelector("md-dialog.jobCard-dialog md-dialog-actions button"), "click");
         console.log("İndirme başlatıldı");
         clearTimeout(clickDownload);
         // Pencereyi manuel kapat (Test için. Otomatik İndirmeyi kapat.)
-        //eventFire( document.querySelector("md-dialog.jobCard-dialog button.close-button"), "click");
+        eventFire( document.querySelector("md-dialog.jobCard-dialog button.close-button"), "click");
       }, timestage9);
     }, timestage8);
   }
@@ -248,27 +291,36 @@ docReady(function() {
   };
   
   function isJobCardExist() {
-    var searchCycle = 0;
-    let setTimer = setInterval(() => {
-      if (document.querySelector("md-menu.buttonlike-menu")) {
-        console.log("Belge bulundu");
-        clearInterval(setTimer);
-        searchCycle = 0;
-        jobCard();
-      } else {
-        if (searchCycle < 8) {
-          searchCycle = searchCycle + 1;
-          console.log("Belge bulunamadı");
-        } else {
-          console.log("Aramaktan vazgeçildi");
+    currentStage = isJobCardExist.name;
+
+    if (isPaused === false) {
+      var searchCycle = 0;
+      let setTimer = setInterval(() => {
+        if (document.querySelector("md-menu.buttonlike-menu")) {
+          console.log("Belge bulundu");
           clearInterval(setTimer);
-          writeResult(1);
+          searchCycle = 0;
+          jobCard();
+        } else {
+          if (searchCycle < 8 && isPaused === false) {
+            searchCycle = searchCycle + 1;
+            console.log("Belge bulunamadı");
+          } else {
+            console.log("Aramaktan vazgeçildi");
+            clearInterval(setTimer);
+            isPaused === false ? writeResult(1) : alert("lel");
+          }
         }
-      }
-    }, 800);
+      }, 2800);
+    } else {
+      console.log("Aramaktan vazgeçildi");
+      //writeResult(3);
+    }
+      
   }
   
   function isDialogExist(final) {
+    currentStage = isDialogExist.name;
     var waitCycle = 0;
     let setTimer = setInterval(() => {
       if (!final) {
@@ -309,28 +361,52 @@ docReady(function() {
     var resultEndOfList = "- ALL COMPLETED ";
     var resultErrorCard = " - JOB CARD NOT FOUND ";
     var resultErrorFile = " - DOWNLOAD ERROR ";
+    var resultCancel = " - OPERATION CANCELED ";
 
     errorType = () => {
-      if (error) {
-        if (error == 1) { return resultErrorCard; } else { return resultErrorFile; }
-      } else {
-        return resultEndOfList;
+      switch (error) {
+        case undefined:
+          return resultEndOfList;
+        case 1:
+          return  resultErrorCard;
+        case 2:
+          return resultErrorFile;
+        case 3:
+          return resultCancel;
       }
     }
     
-    if (quaueIndex < (userLines.length-1) ) {
-      userLines[quaueIndex] = "[" + (quaueIndex+1) + "]" + (error ? errorType() : resultSuccess) + "[" + userLines[quaueIndex] + "]";
-      quaueIndex = quaueIndex + 1 ;
-      setQuaue();
-      searchDoc();
+
+    if (error !== 3) {
+      if (quaueIndex < (userLines.length-1) ) {
+        userLines[quaueIndex] = "[" + (quaueIndex+1) + "]" + (error ? errorType() : resultSuccess) + "[" + userLines[quaueIndex] + "]";
+        quaueIndex = quaueIndex + 1 ;
+        setQuaue();
+        searchDoc();
+      }
+      else {
+        userLines[quaueIndex] = "[" + (quaueIndex+1) + "]" + errorType() + "[" + userLines[quaueIndex] + "]";
+        setQuaue();
+        quaueIndex = 0;
+        userKeyword = "";
+        resetFilter();
+        document.getElementById("automizerreset").disabled = false;
+      }
+    } else {
+      //userLines[quaueIndex] = "[" + (quaueIndex+1) + "]" + errorType() + "[" + userLines[quaueIndex] + "]";
+      if (quaueIndex < (userLines.length-1) ) {
+        //quaueIndex = quaueIndex + 1;
+      } else {
+        //quaueIndex = 0;
+        //userKeyword = "";
+        //resetFilter();
+        //document.getElementById("automizerreset").disabled = true;
+      }
+      //setQuaue();
+      console.log("writeResult DURDURULDU, sıradaki ayarlandı");
     }
-    else {
-      userLines[quaueIndex] = "[" + (quaueIndex+1) + "]" + errorType() + "[" + userLines[quaueIndex] + "]";
-      setQuaue();
-      quaueIndex = 0;
-      userKeyword = "";
-      resetFilter();
-    }
+     
+
   }
   
   function setQuaue() {
