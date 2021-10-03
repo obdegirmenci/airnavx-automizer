@@ -3,7 +3,7 @@
 // @namespace			https://w3.airbus.com
 // @include				https://w3.airbus.com/1T40/search/text*
 // @description   Job Card batch downloader
-// @version				2.0
+// @version				2.1
 // @grant					none
 // ==/UserScript==
 
@@ -119,8 +119,8 @@ const createUserUi = ( `
 
   <div id="automizer">
     <div id="automizer-header">
-      Automizer <span id="scriptversion">v2.0</span>
-      <p id="copyright">© Copyright obdegirmenci</p>
+      Automizer <span id="scriptversion">v2.1</span>
+      <p id="copyright" title=" Kullanmak sizin tercihinizdir. Oluşabilecek hiçbir zararda sorumluluk kabul etmiyorum.">© Copyright obdegirmenci</p>
     </div>
     <div id="automizer-panel">
       <label>MSN - TN  - FSN - Eng Mod</label>
@@ -135,6 +135,11 @@ const createUserUi = ( `
     </div>
   </div>
 ` );
+
+const author = ["obdegirmenci"];
+const legal = [""];
+const version = [""];
+
 // default numbers 05036 200435-01
 function docReady(fn) {
     // see if DOM is already available
@@ -198,6 +203,7 @@ docReady(function() {
 
   const resetFilter = function() {
     currentStage = resetFilter.name;
+
     eventFire( document.querySelector("button.resetButtonStyle"), "click" );
     eventFire( document.querySelector("button.clear-button"), "click" );
 
@@ -218,19 +224,19 @@ docReady(function() {
         return writeResult(3);
       } else {
         isPaused = true;
-        buttonPause.textContent = "PAUSED"
+        buttonPause.textContent = "PAUSED";
         buttonReset.disabled = false;
         return writeResult(3);
       }
     } else if (isReset === true) {
       console.log("Liste tamamlanmadan sıfırlandı");
       isPaused = false;
-      buttonPause.textContent = "PAUSE"
+      buttonPause.textContent = "PAUSE";
       buttonReset.disabled = true;
       quaueIndex = 0;
     } else {
       isPaused = false;
-      buttonPause.textContent = "PAUSE"
+      buttonPause.textContent = "PAUSE";
       buttonReset.disabled = true;
       return searchDoc();
     }
@@ -305,14 +311,26 @@ docReady(function() {
 
   // İş kartı menüsü
   function jobCard() {
-    setTimeout(function() {
-      eventFire(document.querySelector("md-menu .md-icon-button"), "click", printTaskJob() );
+    
+    if (currentStage === "resetFilter") {
+      
+      console.log("İş kartı kontrolü resetten dolayı aramaktan vazgeçildi");
+      clearInterval(setTimer);
+      return;
 
-      // Yeni iş kartı
-      function printTaskJob() {
-        eventFire(document.querySelector(".job-card-menu-actions a.ng-scope"), "click", isDialogExist() );
-      }
-    }, timestage7);
+    } else {
+
+      setTimeout(function() {
+        eventFire(document.querySelector("md-menu .md-icon-button"), "click", printTaskJob() );
+
+        // Yeni iş kartı
+        function printTaskJob() {
+          eventFire(document.querySelector(".job-card-menu-actions a.ng-scope"), "click", isDialogExist() );
+        }
+      }, timestage7);
+
+    }
+    
   }
 
   // Paket adı
@@ -365,6 +383,7 @@ docReady(function() {
 
     if (isPaused === false) {
       var searchCycle = 0;
+
       let setTimer = setInterval(() => {
         if (document.querySelector("md-menu.buttonlike-menu")) {
           console.log("Belge bulundu");
@@ -372,9 +391,14 @@ docReady(function() {
           searchCycle = 0;
           jobCard();
         } else {
-          if (searchCycle < 8 && isPaused === false) {
+          if (searchCycle < 2 && isPaused === false ) {
             searchCycle = searchCycle + 1;
             console.log("Belge bulunamadı");
+            if (currentStage === "resetFilter") {
+              console.log("Kart döngüsünde resetten dolayı aramaktan vazgeçildi");
+              clearInterval(setTimer);
+              return;
+            }
           } else {
             console.log("Aramaktan vazgeçildi");
             clearInterval(setTimer);
@@ -391,6 +415,7 @@ docReady(function() {
   
   function isDialogExist(final) {
     currentStage = isDialogExist.name;
+
     var waitCycle = 0;
     let setTimer = setInterval(() => {
       if (!final) {
@@ -404,14 +429,20 @@ docReady(function() {
       } else {
         ///// İndirilemediyse iptal et
         if (waitCycle < 20) {
-          if (document.querySelector("md-dialog.jobCard-dialog")) {
-            waitCycle = waitCycle + 1;
-            console.log("Diyalog penceresi açık");
-          } else {
-            waitCycle = 0;
-            console.log("Diyalog penceresi kapalı");
+          if (currentStage === "resetFilter") {
+            console.log("Diyalog döngüsünde resetten dolayı aramaktan vazgeçildi");
             clearInterval(setTimer);
-            writeResult();
+            return;
+          } else {
+            if (document.querySelector("md-dialog.jobCard-dialog")) {
+              waitCycle = waitCycle + 1;
+              console.log("Diyalog penceresi açık");
+            } else {
+              waitCycle = 0;
+              console.log("Diyalog penceresi kapalı");
+              clearInterval(setTimer);
+              writeResult();
+            }
           }
         } else {
           eventFire( document.querySelector("md-dialog.jobCard-dialog button.close-button"), "click");
@@ -428,7 +459,7 @@ docReady(function() {
   
   function writeResult(error) {
     var resultSuccess = " - COMPLETED ";
-    var resultEndOfList = "- ALL COMPLETED ";
+    var resultEndOfList = " - ALL COMPLETED ";
     var resultErrorCard = " - JOB CARD NOT FOUND ";
     var resultErrorFile = " - DOWNLOAD ERROR ";
     var resultCancel = " - OPERATION CANCELED ";
@@ -456,27 +487,43 @@ docReady(function() {
       }
       else {
         userLines[quaueIndex] = "[" + (quaueIndex+1) + "]" + errorType() + "[" + userLines[quaueIndex] + "]";
+        
+        let finalCount = userLines.length;
+
+        userLines[quaueIndex+1] = "✈ ...";
+        userLines[quaueIndex+2] = "----------------[REPORT]----------------";
+
+        let logLine = 3;
+        let errCount = 0;
+        const regex = /(?: - DOWNLOAD ERROR | - JOB CARD NOT FOUND )/g;
+        userLines.forEach( x => {
+          if (regex.test(x) ) {
+            userLines[quaueIndex+logLine] = x;
+            logLine++;
+            errCount++;
+            console.log(x);
+          } else {
+            if (errCount > 0) {
+              userLines[quaueIndex+logLine] = `${finalCount - errCount} / ${finalCount}`;
+            } else {
+              userLines[quaueIndex+logLine] = `${finalCount} / ${finalCount}`;
+            }
+            userLines[quaueIndex+logLine+1] = "✈ ...";
+          }
+        });
+
         setQuaue();
+
         quaueIndex = 0;
         userKeyword = "";
         resetFilter();
         buttonReset.disabled = false;
+
       }
     } else {
-      //userLines[quaueIndex] = "[" + (quaueIndex+1) + "]" + errorType() + "[" + userLines[quaueIndex] + "]";
-      if (quaueIndex < (userLines.length-1) ) {
-        //quaueIndex = quaueIndex + 1;
-      } else {
-        //quaueIndex = 0;
-        //userKeyword = "";
-        //resetFilter();
-        //document.getElementById("automizerreset").disabled = true;
-      }
-      //setQuaue();
       console.log("writeResult DURDURULDU, sıradaki ayarlandı");
     }
      
-
   }
   
   function setQuaue() {
