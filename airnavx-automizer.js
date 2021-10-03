@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name          AIRBUS airnavx - Automizer
 // @namespace			https://w3.airbus.com
-// @include				https://w3.airbus.com/1T40/search/text
+// @include				https://w3.airbus.com/1T40/search/text*
 // @description   Job Card batch downloader
-// @version				1.2
+// @version				1.3
 // @grant					none
 // ==/UserScript==
 
@@ -23,7 +23,7 @@ let automizerdialog = ( `
       position: absolute;
       top: 200px;
       right: 250px;
-      z-index: 20;
+      z-index: 180;
     }
     #automizer-header {
       background: #122f59;
@@ -33,7 +33,7 @@ let automizerdialog = ( `
       font-weight: bold;
       cursor: move;
       user-select: none;
-      z-index: 30;
+      z-index: 200;
     }
     #scriptversion {
       font-size: 12px;
@@ -75,19 +75,19 @@ let automizerdialog = ( `
 
   <div id="automizer">
     <div id="automizer-header">
-      Automizer <span id="scriptversion">v1.2</span>
+      Automizer <span id="scriptversion">v1.3</span>
       <p id="copyright">© Copyright obdegirmenci</p>
     </div>
     <div id="automizer-panel">
       <label>MSN - TN  - FSN - Eng Mod</label>
-      <input id="planenumber" class="automizer-input" type="text" placeholder="00435 TC-LGC - TRENTXWB-84">
+      <input id="planenumber" class="automizer-input" type="text" placeholder="00435 TC-LGC - TRENTXWB-84" value="05036">
       <label>Content</label>
-      <textarea id="searchkeyword" class="automizer-input" type="text" placeholder="FUEL..."></textarea>
-      <button id="automizersearch" class="resetButtonStyle md-primary md-raised md-button">SEARCH</button> <button class="resetButtonStyle md-primary md-raised md-button">RESET</button>
+      <textarea id="searchkeyword" class="automizer-input" type="text" placeholder="FUEL...">200435-01</textarea>
+      <button id="automizersearch" class="resetButtonStyle md-primary md-raised md-button">SEARCH</button> <button id="automizerreset" class="resetButtonStyle md-primary md-raised md-button">RESET</button>
     </div>
   </div>
 ` );
-
+// default numbers 05036 200435-01
 function docReady(fn) {
     // see if DOM is already available
     if (document.readyState === "complete" || document.readyState === "interactive") {
@@ -100,14 +100,14 @@ function docReady(fn) {
 
 // Zaman ayarı
 var timestage1 = 2500; // Sayfa yüklendikten sonra başlat
-var timestage2 = 2000; // MSN arat
+var timestage2 = 0; // MSN arat
 var timestage3 = 1800; // Uçağı seç
 var timestage4 = 0; // Belge numarasını yaz
 var timestage5 = 0; // Belge numarasını arat
 var timestage6 = 0; // İş kartı menüsü
-var timestage7 = 3800; // Yeni iş kartı
-var timestage8 = 1200; // Paket adı
-var timestage9 = 2000; // PDF indir
+var timestage7 = 0; // Yeni iş kartı
+var timestage8 = 0; // Paket adı
+var timestage9 = 4000; // PDF indir
 
 
 // --VARIABLES--
@@ -117,16 +117,23 @@ var searchkeyword;
 // Sayfa yüklendikten sonra başlat
 docReady(function() {
   const starter = function() {
-    //alert('helloe')
+    filtercheck();
     tailnumber = document.getElementById("planenumber").value;
     searchkeyword = document.getElementById("searchkeyword").value;
     eventFire(document.getElementById("select_24"), "click", changeTail() );
   };
-    document.body.insertAdjacentHTML("beforeend", automizerdialog);
-    document.getElementById("automizersearch").addEventListener("click", starter);
-    dragElement(document.getElementById("automizer"));
-    //eventFire(document.getElementById("select_24"), "click", changeTail() );
+  const toolbarresetbutton = function () {
+    eventFire( document.querySelector("button.resetButtonStyle"), "click" );
+    eventFire( document.querySelector("button.clear-button"), "click" );
+  };
+
+  document.body.insertAdjacentHTML("beforeend", automizerdialog);
+  document.getElementById("automizersearch").addEventListener("click", starter);
+  document.getElementById("automizerreset").addEventListener("click", toolbarresetbutton);
+  //document.getElementById("select_24").addEventListener("click", filtercheck);
+  dragElement(document.getElementById("automizer"));
 } );
+
 // CLICK EVENT
 function eventFire(el, etype, callback) {
   if (el.fireEvent) {
@@ -137,6 +144,7 @@ function eventFire(el, etype, callback) {
     el.dispatchEvent(evObj);
   }
 }
+
 // CHANGE TEXT
 function setKeywordText(text,target) {
     var el = target;
@@ -145,6 +153,7 @@ function setKeywordText(text,target) {
     evt.initEvent("change", true, true);
     el.dispatchEvent(evt);
 }
+
 // ENTER KEY
 const keyboardEvent = new KeyboardEvent("keydown", {
   code: "Enter",
@@ -159,30 +168,27 @@ const keyboardEvent = new KeyboardEvent("keydown", {
 function changeTail() {
   setTimeout(function(){
     // MSN yaz
-    // test number 05036 200435-01
     document.getElementById("tailNumberInput").value = tailnumber;
     // MSN arat
     document.getElementById("tailNumberInput").dispatchEvent(keyboardEvent);
     // Uçağı seç
-    setTimeout(function() {
+    /*setTimeout(function() {
       eventFire( document.querySelector(".msn-wrapper li md-option" ), "click" );
       searchdoc();
-    }, timestage3);
+    }, timestage3);*/
   }, timestage2);
 }
 
 // Belge
 function searchdoc() {
   setTimeout(function() {
-    let hanSearchForm = document.querySelector("form[name=searchForm] > input");
-    setTimeout(function() { 
-      // Belge numarasını yaz
-      setKeywordText(searchkeyword,hanSearchForm);
-      // Belge numarasını arat
-      setTimeout(function() { 
-          eventFire(document.querySelector(".search-button"), "click", jobcard() );
-      }, timestage5);
-    }, timestage6);
+    var hanSearchForm = document.querySelector("form[name=searchForm] > input");
+    // Belge numarasını yaz
+    setKeywordText(searchkeyword,hanSearchForm);
+    // Belge numarasını arat
+    
+    //jobcardexist = document.querySelector('md-menu.buttonlike-menu');
+    eventFire(document.querySelector(".search-button"), "click", jobcardexist() );
   }, timestage4);
 }
 
@@ -190,24 +196,28 @@ function searchdoc() {
 function jobcard() {
   setTimeout(function() {
     eventFire(document.querySelector("md-menu .md-icon-button"), "click", printtaskjob() );
-    
+
     // Yeni iş kartı
     function printtaskjob() {
-      //alert('heeeo');
-      eventFire(document.querySelector(".job-card-menu-actions a.ng-scope"), "click", printpdf() );
-      // Paket adı
-      function printpdf() {
-        setTimeout(function() {
-          var packagename = document.querySelector(".jobCardForm input");
-          setKeywordText(searchkeyword,packagename); 
-          // PDF indir
-          /*setTimeout(function() {
-            eventFire(document.querySelector("md-dialog.jobCard-dialog md-dialog-actions button"), "click");
-          }, timestage9);*/
-        }, timestage8);
-      }
+      eventFire(document.querySelector(".job-card-menu-actions a.ng-scope"), "click", dialogexist() );
     }
   }, timestage7);
+}
+
+// Paket adı
+function printpdf() {
+  setTimeout(function() {
+    var packagename = document.querySelector(".jobCardForm input");
+    setKeywordText(searchkeyword,packagename); 
+    dialogexist(1);
+    // PDF indir
+    setTimeout(function() {
+      //eventFire(document.querySelector("md-dialog.jobCard-dialog md-dialog-actions button"), "click");
+      console.log("yazdırdım");
+      // Pencereyi kapat
+      eventFire( document.querySelector("md-dialog.jobCard-dialog button.close-button"), "click");
+    }, timestage9);
+  }, timestage8);
 }
 
 /*
@@ -217,8 +227,6 @@ function jobcard() {
 */
 
 // Make the DIV element draggable:
-//dragElement(document.getElementById("automizer"));
-
 function dragElement(elmnt) {
   var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
   if (document.getElementById(elmnt.id + "-header")) {
@@ -258,4 +266,71 @@ function dragElement(elmnt) {
     document.onmouseup = null;
     document.onmousemove = null;
   }
+}
+
+////////////////////
+
+var filtercheck = function () {
+  setTimeout(function() {
+
+    //alert('leeeo');
+    // Select the node that will be observed for mutations
+    var targetNode = document.querySelector(".msn-wrapper ul" );
+    
+    // Options for the observer (which mutations to observe)
+    var config = { childList: true};
+    
+    // Callback function to execute when mutations are observed
+    var callback = function(mutationsList, observer) {
+      console.log('Filtre değişti');
+      eventFire( document.querySelector(".msn-wrapper li md-option" ), "click" );
+      searchdoc();
+    };
+    
+    // Create an observer instance linked to the callback function
+    var observer = new MutationObserver(callback);
+    
+    // Start observing the target node for configured mutations
+    return observer.observe(targetNode, config);
+    
+    // Later, you can stop observing
+    //observer.disconnect();
+  }, 100); // Filtre için biraz pay
+};
+
+function jobcardexist() {
+  let timeid = setInterval(() => {
+    if(document.querySelector('md-menu.buttonlike-menu')) {
+      console.log('belge buldum');
+      clearInterval(timeid);
+      jobcard();
+    } else {
+      console.log('belge bulamadım');
+    }
+  }, 800);
+}
+
+function dialogexist(final) {
+  let timeid = setInterval(() => {
+    if(!final) {
+      if(document.querySelector('md-dialog.jobCard-dialog')) {
+        console.log('dialog buldum');
+        clearInterval(timeid);
+        printpdf();
+      } else {
+        console.log('dialog bulamadım');
+      }
+    } else {
+      if(document.querySelector('md-dialog.jobCard-dialog')) {
+        console.log('dialog açık');
+      } else {
+        console.log('dialog kapandı');
+        clearInterval(timeid);
+        //eventFire(document.getElementById("automizerreset"), "click");
+        searchkeyword='323100-09';
+        searchdoc();
+        //document.getElementById("automizersearch").addEventListener("click", starter);
+      }
+    }
+  }, 800);
 }
