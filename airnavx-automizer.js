@@ -3,11 +3,11 @@
 // @namespace			https://w3.airbus.com
 // @include				https://w3.airbus.com/1T40/search/text*
 // @description   Job Card batch downloader
-// @version				1.9
+// @version				2.0
 // @grant					none
 // ==/UserScript==
 
-let createUserUi = ( `
+const createUserUi = ( `
   <style>
     .automizer-input::selection {
       background: #ccc;
@@ -119,7 +119,7 @@ let createUserUi = ( `
 
   <div id="automizer">
     <div id="automizer-header">
-      Automizer <span id="scriptversion">v1.9</span>
+      Automizer <span id="scriptversion">v2.0</span>
       <p id="copyright">© Copyright obdegirmenci</p>
     </div>
     <div id="automizer-panel">
@@ -159,7 +159,7 @@ var timestage9 = 1000; // PDF indir
 
 // Sayfa yüklendikten sonra başlat
 docReady(function() {
-  var tailNumber;
+  var getTailNumber;
   var userKeyword;
   var quaueIndex = 0;
   var userTextArea;
@@ -168,12 +168,23 @@ docReady(function() {
   var currentStage;
   var isPaused = false;
   
+  document.body.insertAdjacentHTML("beforeend", createUserUi);
+  const uiApp = document.getElementById("automizer");
+  const uiHeader = document.getElementById("automizer-header");
+  const uiBody = document.getElementById("automizer-panel");
+
+  const tailNumber = document.getElementById("planenumber");
+
+  const buttonSearch = document.getElementById("automizersearch");
+  const buttonReset = document.getElementById("automizerreset");
+  const buttonPause = document.getElementById("automizerpause");
+  
   const starter = function() {
-    document.getElementById("automizersearch").disabled = true;
-    document.getElementById("automizerreset").disabled = true;
-    document.getElementById("automizerpause").disabled = false;
+    buttonSearch.disabled = true;
+    buttonReset.disabled = true;
+    buttonPause.disabled = false;
     filterCheck();
-    tailNumber = document.getElementById("planenumber").value;
+    getTailNumber = tailNumber.value;
     userTextArea = document.getElementById("searchkeyword");
 
     document.getElementById("planenumber").disabled = true;
@@ -184,6 +195,7 @@ docReady(function() {
     setQuaue();
     eventFire(document.getElementById("select_24"), "click", changeTail() );
   };
+
   const resetFilter = function() {
     currentStage = resetFilter.name;
     eventFire( document.querySelector("button.resetButtonStyle"), "click" );
@@ -192,42 +204,48 @@ docReady(function() {
     document.getElementById("planenumber").disabled = false;
     userTextArea.disabled = false;
 
-    document.getElementById("automizersearch").disabled = false;
-    document.getElementById("automizerpause").disabled = true;
+    buttonSearch.disabled = false;
+    buttonPause.disabled = true;
     pauseSearch(true);
   };
+
   const pauseSearch = function(isReset) {
     console.log('AKTİF AŞAMA: ' + currentStage);
     
     if (isPaused !== true) {
-      isPaused = true;
-      document.getElementById("automizerpause").textContent = "PAUSED"
-      document.getElementById("automizerreset").disabled = false;
-      return writeResult(3);
+      if (isReset === true) {
+        console.log("Liste tamamlandı sıfırlandı");
+        return writeResult(3);
+      } else {
+        isPaused = true;
+        buttonPause.textContent = "PAUSED"
+        buttonReset.disabled = false;
+        return writeResult(3);
+      }
     } else if (isReset === true) {
       console.log("Liste tamamlanmadan sıfırlandı");
       isPaused = false;
-      document.getElementById("automizerpause").textContent = "PAUSE"
-      document.getElementById("automizerreset").disabled = true;
+      buttonPause.textContent = "PAUSE"
+      buttonReset.disabled = true;
+      quaueIndex = 0;
     } else {
       isPaused = false;
-      document.getElementById("automizerpause").textContent = "PAUSE"
-      document.getElementById("automizerreset").disabled = true;
+      buttonPause.textContent = "PAUSE"
+      buttonReset.disabled = true;
       return searchDoc();
     }
+
   };
+
   const minimizePanel = function() {
-    //let minimizer = document.getElementById("automizer-header");
-    let panel = document.getElementById("automizer-panel");
-    panel.style.display === "none" ? panel.style.display = "block" : panel.style.display = "none";
+    uiBody.style.display === "none" ? uiBody.style.display = "block" : uiBody.style.display = "none";
   };
-  
-  document.body.insertAdjacentHTML("beforeend", createUserUi);
-  document.getElementById("automizersearch").addEventListener("click", starter);
-  document.getElementById("automizerreset").addEventListener("click", resetFilter);
-  document.getElementById("automizerpause").addEventListener("click", pauseSearch);
-  document.getElementById("automizer-header").addEventListener("dblclick", minimizePanel);
-  dragElement(document.getElementById("automizer"));
+
+  buttonSearch.addEventListener("click", starter);
+  buttonReset.addEventListener("click", resetFilter);
+  buttonPause.addEventListener("click", pauseSearch);
+  uiHeader.addEventListener("dblclick", minimizePanel);
+  dragElement(uiApp);
 
   // CLICK EVENT
   function eventFire(el, etype, callback) {
@@ -263,7 +281,7 @@ docReady(function() {
   function changeTail() {
     setTimeout(function(){
       // MSN yaz
-      document.getElementById("tailNumberInput").value = tailNumber;
+      document.getElementById("tailNumberInput").value = getTailNumber;
       // MSN arat
       document.getElementById("tailNumberInput").dispatchEvent(keyboardEvent);
       // Uçağı seç
@@ -301,7 +319,7 @@ docReady(function() {
   function printPdf() {
       setTimeout(function() {
       var packagename = document.querySelector(".jobCardForm input");
-      setKeywordText(userKeyword,packagename); 
+      setKeywordText(userKeyword, packagename); 
       isDialogExist(1); // Kapat
       // PDF indir
       clickDownload = setTimeout(function() {
@@ -360,7 +378,7 @@ docReady(function() {
           } else {
             console.log("Aramaktan vazgeçildi");
             clearInterval(setTimer);
-            isPaused === false ? writeResult(1) : alert("DÖNGÜDE DURDURDUM");
+            isPaused === false ? writeResult(1) : console.log("DÖNGÜDE DURDURDUM");
           }
         }
       }, 2800);
@@ -442,7 +460,7 @@ docReady(function() {
         quaueIndex = 0;
         userKeyword = "";
         resetFilter();
-        document.getElementById("automizerreset").disabled = false;
+        buttonReset.disabled = false;
       }
     } else {
       //userLines[quaueIndex] = "[" + (quaueIndex+1) + "]" + errorType() + "[" + userLines[quaueIndex] + "]";
