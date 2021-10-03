@@ -3,7 +3,7 @@
 // @namespace			https://w3.airbus.com
 // @include				https://w3.airbus.com/1T40/search/text*
 // @description   Job Card batch downloader
-// @version				1.3
+// @version				1.4
 // @grant					none
 // ==/UserScript==
 
@@ -68,21 +68,21 @@ let automizerdialog = ( `
       padding-left: 10px;
     }
     #searchkeyword {
-      height: 250px;
       resize: none;
+      line-height: 18px;
     }
   </style>
 
   <div id="automizer">
     <div id="automizer-header">
-      Automizer <span id="scriptversion">v1.3</span>
+      Automizer <span id="scriptversion">v1.4</span>
       <p id="copyright">© Copyright obdegirmenci</p>
     </div>
     <div id="automizer-panel">
       <label>MSN - TN  - FSN - Eng Mod</label>
       <input id="planenumber" class="automizer-input" type="text" placeholder="00435 TC-LGC - TRENTXWB-84" value="05036">
       <label>Content</label>
-      <textarea id="searchkeyword" class="automizer-input" type="text" placeholder="FUEL...">200435-01</textarea>
+      <textarea id="searchkeyword" class="automizer-input" type="text" placeholder="FUEL..." rows="20">200435-01</textarea>
       <button id="automizersearch" class="resetButtonStyle md-primary md-raised md-button">SEARCH</button> <button id="automizerreset" class="resetButtonStyle md-primary md-raised md-button">RESET</button>
     </div>
   </div>
@@ -120,7 +120,8 @@ docReady(function() {
     filtercheck();
     tailnumber = document.getElementById("planenumber").value;
     searchkeyword = document.getElementById("searchkeyword").value;
-    eventFire(document.getElementById("select_24"), "click", changeTail() );
+
+    //eventFire(document.getElementById("select_24"), "click", changeTail() );
   };
   const toolbarresetbutton = function () {
     eventFire( document.querySelector("button.resetButtonStyle"), "click" );
@@ -186,8 +187,6 @@ function searchdoc() {
     // Belge numarasını yaz
     setKeywordText(searchkeyword,hanSearchForm);
     // Belge numarasını arat
-    
-    //jobcardexist = document.querySelector('md-menu.buttonlike-menu');
     eventFire(document.querySelector(".search-button"), "click", jobcardexist() );
   }, timestage4);
 }
@@ -327,9 +326,8 @@ function dialogexist(final) {
         console.log('dialog kapandı');
         clearInterval(timeid);
         //eventFire(document.getElementById("automizerreset"), "click");
-        searchkeyword='323100-09';
-        searchdoc();
-        //document.getElementById("automizersearch").addEventListener("click", starter);
+        //searchkeyword='323100-09';
+        //searchdoc();
       }
     }
   }, 800);
