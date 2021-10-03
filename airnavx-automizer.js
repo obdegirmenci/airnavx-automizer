@@ -3,81 +3,123 @@
 // @namespace			https://w3.airbus.com
 // @include				https://w3.airbus.com/1T40/search/text*
 // @description   Job Card batch downloader
-// @version				1.8
+// @version				1.9
 // @grant					none
 // ==/UserScript==
 
 let createUserUi = ( `
   <style>
+    .automizer-input::selection {
+      background: #ccc;
+      color: #000;
+    }
     #automizer {
-      width: 400px;
-      color: #fff;
-      background: #1c3e71;
-      border: 2px solid #122f59;
-      border-radius: 8px;
-      box-shadow: 0 5px 16px #00000082;
-      box-sizing: border-box;
-      position: absolute;
-      top: 200px;
-      right: 350px;
-      z-index: 180;
+    width: 400px;
+    color: #fff;
+    background: #1c3e71;
+    box-shadow: 0 4px 16px #00000082;
+    box-sizing: border-box;
+    /*margin: auto;*/
+    
+    position: absolute;
+    top: 200px;
+    right: 350px;
+    
+    z-index: 180;
     }
     #automizer-header {
-      background: #122f59;
-      border-bottom: 3px solid #66cedd;
-      padding: 8px 16px 6px 16px;
-      font-size: 18px;
-      font-weight: bold;
-      cursor: move;
-      user-select: none;
-      z-index: 200;
+    background: #122f59;
+    border-bottom: 3px solid #66cedd;
+    padding: 8px 30px 6px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: move;
+    user-select: none;
+    z-index: 200;
     }
     #scriptversion {
-      font-size: 12px;
-      font-weight: normal;
+    font-size: 12px;
+    font-weight: normal;
     }
     #copyright {
-      margin: 4px 0 4px 0;
-      font-size: 10px;
-      font-weight: normal;
+    margin: 4px 0 4px 0;
+    font-size: 10px;
+    font-weight: normal;
     }
     #automizer-panel {
-      padding: 8px 16px 6px 16px;
+    padding: 8px 18px 6px 18px;
     }
     .automizer-input {
-      width: 100%;
-      display: block;
-      /* float: right; */
-      margin: 8px 0 8px 0;
-      box-sizing: border-box;
-      border: none;
-      padding: 10px;
-      color: #fff;
-      background: rgba(18, 47, 89, 0.5);
-      border: 1px solid #122f59;
-      border-radius: 4px;
+    width: 100%;
+    display: block;
+    margin: 8px 0 8px 0;
+    box-sizing: border-box;
+    border: none;
+    padding: 12px;
+    color: #fff;
+    background: rgba(18, 47, 89, 0.5);
+    border-bottom: 3px solid transparent;
+    transition: 0.1s ease;
     }
-    .automizer-input:hover, .automizer-input:focus {
-      background: rgba(18, 47, 89, 1);
-      border: 1px solid #66cedd;
+    .automizer-input:hover, .automizer-input:focus, .automizer-input:active {
+    /*background: #66cedd29;*/
+    background: rgba(18, 47, 89, 1);
+    outline: 0 none;
+    border-bottom: 3px solid #66cedd;
     }
     #automizer-panel label {
-      padding-left: 10px;
+    padding-left: 12px;
+    user-select: none;
     }
     #searchkeyword {
-      resize: none;
-      line-height: 18px;
+    resize: none;
+    line-height: 18px;
     }
     #planenumber:disabled, #searchkeyword:disabled {
-      background: #13233c;
-      color: #66cedd;
-      border: 1px solid #666;
+    background: rgba(30, 28, 28, 0.5);
+    color: #ccc;
+    border-bottom: 3px solid #13233c;
+    pointer-events: none;
+    }
+    #automizer-actions {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 16px 0 8px 0;
+    }
+    .automizer-button {
+    width: 100%;
+    background: none;
+    padding: 8px;
+    background: rgba(18, 47, 89, 0.5);
+    color: #fff;
+    border: none;
+    border-bottom: 3px solid transparent;
+    transition: 0.1s ease;
+    }
+    .automizer-button:hover, .automizer-button:focus {
+    background: rgba(18, 47, 89, 1);
+    outline: 0 none;
+    border-bottom: 3px solid #66cedd;
+    cursor: pointer;
+    /*box-shadow: 0 0 4px #66cedd*/
+    }
+    .automizer-button:active {
+    background: #66cedd;
+    /*box-shadow: 0 0 14px #66cedd inset;*/
+    }
+    .automizer-button:disabled {
+    background: rgba(30, 28, 28, 0.5);
+    color: #ccc;
+    border-bottom: 3px solid #13233c;
+    pointer-events: none;
     }
   </style>
 
   <div id="automizer">
     <div id="automizer-header">
-      Automizer <span id="scriptversion">v1.8</span>
+      Automizer <span id="scriptversion">v1.9</span>
       <p id="copyright">© Copyright obdegirmenci</p>
     </div>
     <div id="automizer-panel">
@@ -85,7 +127,11 @@ let createUserUi = ( `
       <input id="planenumber" class="automizer-input" type="text" placeholder="00435 TC-LGC - TRENTXWB-84" value="05036">
       <label>Content</label>
       <textarea id="searchkeyword" class="automizer-input" type="text" placeholder="Reason for the Job Refer to the MPD TASK: 200435-01" rows="20">200435-01</textarea>
-      <button id="automizersearch" class="resetButtonStyle md-primary md-raised md-button">SEARCH</button> <button id="automizerreset" class="resetButtonStyle md-primary md-raised md-button">RESET</button> <button id="automizerpause" class="resetButtonStyle md-primary md-raised md-button" disabled>PAUSE</button>
+      <div id="automizer-actions">
+
+        <button id="automizersearch" class="automizer-button">SEARCH</button> <button id="automizerreset" class="automizer-button">RESET</button> <button id="automizerpause" class="automizer-button" disabled>PAUSE</button>
+
+      </div>
     </div>
   </div>
 ` );
@@ -159,7 +205,7 @@ docReady(function() {
       document.getElementById("automizerreset").disabled = false;
       return writeResult(3);
     } else if (isReset === true) {
-      alert("yep");
+      console.log("Liste tamamlanmadan sıfırlandı");
       isPaused = false;
       document.getElementById("automizerpause").textContent = "PAUSE"
       document.getElementById("automizerreset").disabled = true;
@@ -170,11 +216,17 @@ docReady(function() {
       return searchDoc();
     }
   };
+  const minimizePanel = function() {
+    //let minimizer = document.getElementById("automizer-header");
+    let panel = document.getElementById("automizer-panel");
+    panel.style.display === "none" ? panel.style.display = "block" : panel.style.display = "none";
+  };
   
   document.body.insertAdjacentHTML("beforeend", createUserUi);
   document.getElementById("automizersearch").addEventListener("click", starter);
   document.getElementById("automizerreset").addEventListener("click", resetFilter);
   document.getElementById("automizerpause").addEventListener("click", pauseSearch);
+  document.getElementById("automizer-header").addEventListener("dblclick", minimizePanel);
   dragElement(document.getElementById("automizer"));
 
   // CLICK EVENT
@@ -308,7 +360,7 @@ docReady(function() {
           } else {
             console.log("Aramaktan vazgeçildi");
             clearInterval(setTimer);
-            isPaused === false ? writeResult(1) : alert("lel");
+            isPaused === false ? writeResult(1) : alert("DÖNGÜDE DURDURDUM");
           }
         }
       }, 2800);
