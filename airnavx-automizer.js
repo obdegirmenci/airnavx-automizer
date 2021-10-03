@@ -3,14 +3,11 @@
 // @namespace			https://w3.airbus.com
 // @include				https://w3.airbus.com/1T40/search/text*
 // @description   Job Card batch downloader
-// @version				1.5
+// @version				1.6
 // @grant					none
 // ==/UserScript==
 
-// --FUNCTIONS--
-
-// --DOCUMENT LOAD--
-let automizerdialog = ( `
+let createUserUi = ( `
   <style>
     #automizer {
       width: 400px;
@@ -75,7 +72,7 @@ let automizerdialog = ( `
 
   <div id="automizer">
     <div id="automizer-header">
-      Automizer <span id="scriptversion">v1.5</span>
+      Automizer <span id="scriptversion">v1.6</span>
       <p id="copyright">© Copyright obdegirmenci</p>
     </div>
     <div id="automizer-panel">
@@ -109,37 +106,31 @@ var timestage7 = 0; // Yeni iş kartı
 var timestage8 = 0; // Paket adı
 var timestage9 = 4000; // PDF indir
 
-
-// --VARIABLES--
-//let searchkeyword= "200435-01";
-var tailnumber;
-var searchkeyword;
-
 // Sayfa yüklendikten sonra başlat
 docReady(function() {
-  var count = 0;
-  var mt;
-  var lines;
+  var tailNumber;
+  var userKeyword;
+  var quaueIndex = 0;
+  var userTextArea;
+  var userLines;
   
   const starter = function() {
-    filtercheck();
-    tailnumber = document.getElementById("planenumber").value;
-    mt = document.getElementById("searchkeyword");
-    lines = mt.value.split('\n');
-    mt.scrollTop = 0;
-    arttirici();
-    //searchkeyword = document.getElementById("searchkeyword").value;
+    filterCheck();
+    tailNumber = document.getElementById("planenumber").value;
+    userTextArea = document.getElementById("searchkeyword");
+    userLines = userTextArea.value.split("\n").filter(item => item);
+    userTextArea.scrollTop = 0;
+    setQuaue();
     eventFire(document.getElementById("select_24"), "click", changeTail() );
   };
-  const toolbarresetbutton = function () {
+  const resetFilter = function () {
     eventFire( document.querySelector("button.resetButtonStyle"), "click" );
     eventFire( document.querySelector("button.clear-button"), "click" );
   };
-
-  document.body.insertAdjacentHTML("beforeend", automizerdialog);
+  
+  document.body.insertAdjacentHTML("beforeend", createUserUi);
   document.getElementById("automizersearch").addEventListener("click", starter);
-  document.getElementById("automizerreset").addEventListener("click", toolbarresetbutton);
-  //document.getElementById("select_24").addEventListener("click", filtercheck);
+  document.getElementById("automizerreset").addEventListener("click", resetFilter);
   dragElement(document.getElementById("automizer"));
 
   // CLICK EVENT
@@ -176,46 +167,46 @@ docReady(function() {
   function changeTail() {
     setTimeout(function(){
       // MSN yaz
-      document.getElementById("tailNumberInput").value = tailnumber;
+      document.getElementById("tailNumberInput").value = tailNumber;
       // MSN arat
       document.getElementById("tailNumberInput").dispatchEvent(keyboardEvent);
       // Uçağı seç
       /*setTimeout(function() {
         eventFire( document.querySelector(".msn-wrapper li md-option" ), "click" );
-        searchdoc();
+        searchDoc();
       }, timestage3);*/
     }, timestage2);
   }
 
   // Belge
-  function searchdoc() {
+  function searchDoc() {
     setTimeout(function() {
-      var hanSearchForm = document.querySelector("form[name=searchForm] > input");
+      var searchForm = document.querySelector("form[name=searchForm] > input");
       // Belge numarasını yaz
-      setKeywordText(searchkeyword,hanSearchForm);
+      setKeywordText(userKeyword, searchForm);
       // Belge numarasını arat
-      eventFire(document.querySelector(".search-button"), "click", jobcardexist() );
+      eventFire(document.querySelector(".search-button"), "click", isJobCardExist() );
     }, timestage4);
   }
 
   // İş kartı menüsü
-  function jobcard() {
+  function jobCard() {
     setTimeout(function() {
-      eventFire(document.querySelector("md-menu .md-icon-button"), "click", printtaskjob() );
+      eventFire(document.querySelector("md-menu .md-icon-button"), "click", printTaskJob() );
 
       // Yeni iş kartı
-      function printtaskjob() {
-        eventFire(document.querySelector(".job-card-menu-actions a.ng-scope"), "click", dialogexist() );
+      function printTaskJob() {
+        eventFire(document.querySelector(".job-card-menu-actions a.ng-scope"), "click", isDialogExist() );
       }
     }, timestage7);
   }
 
   // Paket adı
-  function printpdf() {
+  function printPdf() {
     setTimeout(function() {
       var packagename = document.querySelector(".jobCardForm input");
-      setKeywordText(searchkeyword,packagename); 
-      dialogexist(1);
+      setKeywordText(userKeyword,packagename); 
+      isDialogExist(1); // Kapat
       // PDF indir
       setTimeout(function() {
         //eventFire(document.querySelector("md-dialog.jobCard-dialog md-dialog-actions button"), "click");
@@ -225,61 +216,10 @@ docReady(function() {
       }, timestage9);
     }, timestage8);
   }
-
-  /*
-  //////////////////
-  //////////////////
-  //////////////////
-  */
-
-  // Make the DIV element draggable:
-  function dragElement(elmnt) {
-    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    if (document.getElementById(elmnt.id + "-header")) {
-      // if present, the header is where you move the DIV from:
-      document.getElementById(elmnt.id + "-header").onmousedown = dragMouseDown;
-    } else {
-      // otherwise, move the DIV from anywhere inside the DIV:
-      elmnt.onmousedown = dragMouseDown;
-    }
-
-    function dragMouseDown(e) {
-      e = e || window.event;
-      e.preventDefault();
-      // get the mouse cursor position at startup:
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      document.onmouseup = closeDragElement;
-      // call a function whenever the cursor moves:
-      document.onmousemove = elementDrag;
-    }
-
-    function elementDrag(e) {
-      e = e || window.event;
-      e.preventDefault();
-      // calculate the new cursor position:
-      pos1 = pos3 - e.clientX;
-      pos2 = pos4 - e.clientY;
-      pos3 = e.clientX;
-      pos4 = e.clientY;
-      // set the element's new position:
-      elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-      elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
-    }
-
-    function closeDragElement() {
-      // stop moving when mouse button is released:
-      document.onmouseup = null;
-      document.onmousemove = null;
-    }
-  }
-
-  ////////////////////
-
-  var filtercheck = function () {
+  
+  var filterCheck = function () {
     setTimeout(function() {
-
-      //alert('leeeo');
+      
       // Select the node that will be observed for mutations
       var targetNode = document.querySelector(".msn-wrapper ul" );
       
@@ -288,9 +228,9 @@ docReady(function() {
       
       // Callback function to execute when mutations are observed
       var callback = function(mutationsList, observer) {
-        console.log('Filtre değişti');
+        console.log("Filtre değişti");
         eventFire( document.querySelector(".msn-wrapper li md-option" ), "click" );
-        searchdoc();
+        searchDoc();
       };
       
       // Create an observer instance linked to the callback function
@@ -303,80 +243,128 @@ docReady(function() {
       //observer.disconnect();
     }, 100); // Filtre için biraz pay
   };
-
-  function jobcardexist() {
+  
+  function isJobCardExist() {
     var searchcycle = 0;
     let timeid = setInterval(() => {
-      if(document.querySelector('md-menu.buttonlike-menu')) {
-        console.log('belge buldum');
+      if(document.querySelector("md-menu.buttonlike-menu")) {
+        console.log("Belge bulundu");
         clearInterval(timeid);
         searchcycle = 0;
-        jobcard();
+        jobCard();
       } else {
         if ( searchcycle < 8) {
           searchcycle = searchcycle + 1;
-          console.log('belge bulamadım');
+          console.log("Belge bulunamadı");
         } else {
-          console.log('aramaktan vazgeçildi');
+          console.log("Aramaktan vazgeçildi");
           clearInterval(timeid);
-          automizerresult(1);
+          writeResult(1);
         }
       }
     }, 800);
   }
-
-  function dialogexist(final) {
+  
+  function isDialogExist(final) {
     let timeid = setInterval(() => {
       if(!final) {
-        if(document.querySelector('md-dialog.jobCard-dialog')) {
-          console.log('dialog buldum');
+        if(document.querySelector("md-dialog.jobCard-dialog")) {
+          console.log("Diyalog bulundu");
           clearInterval(timeid);
-          printpdf();
+          printPdf();
         } else {
-          console.log('dialog bulamadım');
+          console.log("Diyalog bulunamadı");
         }
       } else {
-        if(document.querySelector('md-dialog.jobCard-dialog')) {
-          console.log('dialog açık');
+        if(document.querySelector("md-dialog.jobCard-dialog")) {
+          console.log("Diyalog Penceresi Açık");
         } else {
-          console.log('dialog kapandı');
+          console.log("Diyalog Penceresi Kapalı");
           clearInterval(timeid);
-          automizerresult();
+          writeResult();
         }
       }
     }, 800);
   }
-
-  function automizerresult(error) {
-    var resultType1 = ' - COMPLETED ';
-    var resultType2 = "- ALL COMPLETED ";
-    var resultType3 = " - JOB CARD NOT FOUND ";
-    if (count < (lines.length-1) ) {
-      lines[count] = '[' + (count+1) + ']' + (error ? resultType3 : resultType1) + '[' + lines[count] + ']';
-      count = count + 1 ;
-      arttirici();
-      searchdoc();
+  
+  function writeResult(error) {
+    var resultSuccess = " - COMPLETED ";
+    var resultEndOfList = "- ALL COMPLETED ";
+    var resultError = " - JOB CARD NOT FOUND ";
+    if (quaueIndex < (userLines.length-1) ) {
+      userLines[quaueIndex] = "[" + (quaueIndex+1) + "]" + (error ? resultError : resultSuccess) + "[" + userLines[quaueIndex] + "]";
+      quaueIndex = quaueIndex + 1 ;
+      setQuaue();
+      searchDoc();
     }
     else {
-      lines[count] = '[' + (count+1) + ']' + (error ? resultType3 : resultType2) + '[' + lines[count] + ']';
-      arttirici();
-      count = 0;
-      toolbarresetbutton();
+      userLines[quaueIndex] = "[" + (quaueIndex+1) + "]" + (error ? resultError : resultEndOfList) + "[" + userLines[quaueIndex] + "]";
+      setQuaue();
+      quaueIndex = 0;
+      userKeyword = "";
+      resetFilter();
     }
   }
+  
+  function setQuaue() {
+    userKeyword = userLines[quaueIndex];
+    console.log(userKeyword + " COUNT:" + quaueIndex);
+    userTextArea.value = userLines.join("\n");
 
-
-
-  function arttirici() {
-    searchkeyword = lines[count];
-    console.log(searchkeyword+' C:'+count);
-    mt.value = lines.join("\n");
-    
-    
-    if (count > 20) {
-      mt.scrollTop = mt.scrollTop + 18;
+    if (quaueIndex > 20) {
+      userTextArea.scrollTop = userTextArea.scrollTop + 18;
     }
     else {}
   }
+  
+  /*
+  ////////////////////////////////////
+  SÜRÜKLE BIRAK
+  ////////////////////////////////////
+  */
+  
+  // Make the DIV element draggable:
+  function dragElement(elmnt) {
+    var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    if (document.getElementById(elmnt.id + "-header")) {
+      // if present, the header is where you move the DIV from:
+      document.getElementById(elmnt.id + "-header").onmousedown = dragMouseDown;
+    } else {
+      // otherwise, move the DIV from anywhere inside the DIV:
+      elmnt.onmousedown = dragMouseDown;
+    }
+  
+    function dragMouseDown(e) {
+      e = e || window.event;
+      e.preventDefault();
+      // get the mouse cursor position at startup:
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      document.onmouseup = closeDragElement;
+      // call a function whenever the cursor moves:
+      document.onmousemove = elementDrag;
+    }
+  
+    function elementDrag(e) {
+      e = e || window.event;
+      e.preventDefault();
+      // calculate the new cursor position:
+      pos1 = pos3 - e.clientX;
+      pos2 = pos4 - e.clientY;
+      pos3 = e.clientX;
+      pos4 = e.clientY;
+      // set the element's new position:
+      elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+      elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+    }
+  
+    function closeDragElement() {
+      // stop moving when mouse button is released:
+      document.onmouseup = null;
+      document.onmousemove = null;
+    }
+  }
 
+  ////////////////////////////////////
+  ////////////////////////////////////
 } );
