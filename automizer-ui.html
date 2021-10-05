@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automizer UI</title>
+    <style>
+
+        body {
+            background-color: #E5E5E5;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            font-size: small;
+        }
+        body > .title {
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 400;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .automizer-input::selection {
+            background: #ccc;
+            color: #000;
+        }
+        #automizer {
+        width: 400px;
+        color: #fff;
+        background: #1c3e71;
+        
+        
+        box-shadow: 0 4px 16px #00000082;
+        box-sizing: border-box;
+        margin: auto;
+        /*
+        position: absolute;
+        top: 200px;
+        right: 350px;
+        */
+        z-index: 180;
+        }
+        #automizer-header {
+        background: #122f59;
+        border-bottom: 3px solid #66cedd;
+        padding: 8px 30px 6px 30px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: move;
+        user-select: none;
+        z-index: 200;
+        }
+        #scriptversion {
+        font-size: 12px;
+        font-weight: normal;
+        }
+        #copyright {
+        margin: 4px 0 4px 0;
+        font-size: 10px;
+        font-weight: normal;
+        }
+        #automizer-panel {
+        padding: 8px 18px 6px 18px;
+        }
+        .automizer-input {
+        width: 100%;
+        display: block;
+        margin: 8px 0 8px 0;
+        box-sizing: border-box;
+        border: none;
+        padding: 12px;
+        color: #fff;
+        background: rgba(18, 47, 89, 0.5);
+        border-bottom: 3px solid transparent;
+        transition: 0.1s ease;
+        }
+        .automizer-input:hover, .automizer-input:focus, .automizer-input:active {
+        /*background: #66cedd29;*/
+        background: rgba(18, 47, 89, 1);
+        outline: 0 none;
+        border-bottom: 3px solid #66cedd;
+        }
+        #automizer-panel label {
+        padding-left: 12px;
+        user-select: none;
+        }
+        #searchkeyword {
+        resize: none;
+        line-height: 18px;
+        }
+        #planenumber:disabled, #searchkeyword:disabled {
+        color: #ccc;
+        border-bottom: 3px solid #13233c;
+        pointer-events: none;
+        }
+        #automizer-actions {
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          gap: 16px;
+          margin: 16px 0 8px 0;
+        }
+        .automizer-button {
+          width: 100%;
+          background: none;
+          padding: 8px;
+          background: rgba(18, 47, 89, 0.5);
+          color: #fff;
+          border: none;
+          border-bottom: 3px solid transparent;
+          transition: 0.1s ease;
+        }
+        .automizer-button:hover, .automizer-button:focus {
+          background: rgba(18, 47, 89, 1);
+          outline: 0 none;
+          border-bottom: 3px solid #66cedd;
+          cursor: pointer;
+          /*box-shadow: 0 0 4px #66cedd*/
+        }
+        .automizer-button:active {
+          background: #66cedd;
+          /*box-shadow: 0 0 14px #66cedd inset;*/
+        }
+        .automizer-button:disabled {
+          color: #ccc;
+          border-bottom: 3px solid #13233c;
+          pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="title">
+      <h1>Automizer UI</h1>
+      <p>Preview of stylesheets.</p>
+    </header>
+
+    <div id="automizer">
+      <div id="automizer-header">
+        Automizer <span id="scriptversion">v1.9</span>
+        <p id="copyright">© Copyright obdegirmenci</p>
+      </div>
+      <div id="automizer-panel">
+        <label>MSN - TN  - FSN - Eng Mod</label>
+        <input id="planenumber" class="automizer-input" type="text" placeholder="00435 TC-LGC - TRENTXWB-84" value="05036" disabled>
+        <label>Content</label>
+        <textarea id="searchkeyword" class="automizer-input" type="text" placeholder="Reason for the Job Refer to the MPD TASK: 200435-01" rows="20">200435-01</textarea>
+        <div id="automizer-actions">
+
+          <button id="automizersearch" class="automizer-button">SEARCH</button> <button id="automizerreset" class="automizer-button">RESET</button> <button id="automizerpause" class="automizer-button" disabled>PAUSE</button>
+
+        </div>
+      </div>
+    </div>
+    
+</body>
+</html>
